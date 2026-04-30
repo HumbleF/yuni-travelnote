@@ -1,0 +1,142 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { MarkdownContent } from "@/components/MarkdownContent";
+import { getAllPlaceSlugs, getPlaceBySlug } from "@/lib/places";
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export function generateStaticParams() {
+  return getAllPlaceSlugs().map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const place = await getPlaceBySlug(slug);
+  if (!place) {
+    return { title: "未找到目的地" };
+  }
+  return {
+    title: place.title,
+    description: place.summary ?? `${place.title} 旅行攻略`,
+  };
+}
+
+function MetaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs uppercase tracking-wider text-muted">
+        {label}
+      </span>
+      <span className="mt-0.5 text-sm font-medium">{value}</span>
+    </div>
+  );
+}
+
+export default async function PlaceDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const place = await getPlaceBySlug(slug);
+
+  if (!place) {
+    notFound();
+  }
+
+  return (
+    <article>
+      <header className="relative">
+        <div className="relative h-[42vh] min-h-[280px] w-full overflow-hidden bg-gradient-to-br from-brand-400 to-brand-700">
+          {place.cover && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={place.cover}
+              alt={place.title}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0">
+            <div className="mx-auto max-w-3xl px-6 pb-8 text-white">
+              {place.country && (
+                <span className="inline-block rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium backdrop-blur">
+                  {place.country}
+                </span>
+              )}
+              <h1 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight">
+                {place.title}
+              </h1>
+              {place.summary && (
+                <p className="mt-3 max-w-2xl text-base sm:text-lg text-white/85 leading-relaxed">
+                  {place.summary}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-3xl px-6 py-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-[rgb(var(--foreground))] transition-colors"
+        >
+          <span aria-hidden>←</span> 返回目的地
+        </Link>
+
+        {(place.bestSeason ||
+          place.duration ||
+          place.budget ||
+          place.country ||
+          (place.tags && place.tags.length > 0)) && (
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-2xl border border-card bg-card p-5">
+            {place.bestSeason && (
+              <MetaItem label="最佳季节" value={place.bestSeason} />
+            )}
+            {place.duration && (
+              <MetaItem label="建议天数" value={place.duration} />
+            )}
+            {place.budget && (
+              <MetaItem label="人均预算" value={place.budget} />
+            )}
+            {place.country && (
+              <MetaItem label="所在地" value={place.country} />
+            )}
+            {place.tags && place.tags.length > 0 && (
+              <div className="flex flex-col col-span-2 sm:col-span-4">
+                <span className="text-xs uppercase tracking-wider text-muted">
+                  标签
+                </span>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {place.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-card px-2 py-0.5 text-xs"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-10">
+          <MarkdownContent html={place.contentHtml} />
+        </div>
+
+        <div className="mt-16 border-t border-card pt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-[rgb(var(--foreground))] transition-colors"
+          >
+            <span aria-hidden>←</span> 返回所有目的地
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
