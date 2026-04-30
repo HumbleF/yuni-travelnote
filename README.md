@@ -253,6 +253,50 @@ npm run build
 
 输出在 `out/` 目录，把它整个上传到任意静态托管即可。
 
+## AI 集成 · 三种 Claude 入口
+
+`travel-skill` 按 [Agent Skills 开放标准](https://github.com/anthropics/skills) 写（YAML frontmatter `name` + `description` + markdown 正文），同一份 SKILL.md 三种入口都能直接识别 + 触发：
+
+| 入口 | 加载位置 | 怎么生效 |
+| --- | --- | --- |
+| **Cursor** | `.cursor/skills/travel-skill/SKILL.md`（已就位） | 打开本仓库即自动发现，命中 description 触发词时加载 |
+| **Claude Code CLI** | `.claude/skills/travel-skill/SKILL.md`（已就位，与 Cursor 版 byte-identical） | `claude` 在本仓根启动即自动发现项目级 skill；想跨项目用，把整个目录复制到 `~/.claude/skills/travel-skill/` |
+| **Claude Desktop / claude.ai 网页** | 上传 ZIP | 见下方「打 ZIP 上传」 |
+
+### 双发同步约定
+
+两份 SKILL.md 必须 byte-identical。任一边改完后跑：
+
+```powershell
+Copy-Item .cursor\skills\travel-skill\SKILL.md .claude\skills\travel-skill\SKILL.md -Force
+(Get-FileHash .cursor\skills\travel-skill\SKILL.md).Hash -eq (Get-FileHash .claude\skills\travel-skill\SKILL.md).Hash
+# 期望: True
+```
+
+### 打 ZIP 上传到 Claude Desktop / claude.ai
+
+```powershell
+New-Item -ItemType Directory -Force -Path dist | Out-Null
+Compress-Archive -Path .claude\skills\travel-skill -DestinationPath dist\travel-skill.zip -Force
+```
+
+ZIP 内顶层必须是 `travel-skill/SKILL.md` 而不是裸 `SKILL.md`（[官方强调](https://support.claude.com/en/articles/12512180-use-skills-in-claude)）。然后：
+
+1. Claude Desktop / claude.ai → **Customize** → **Skills**
+2. 点 **+** → **+ Create skill** → **Upload a skill**
+3. 选 `dist\travel-skill.zip`
+
+`dist/` 已在 `.gitignore`，ZIP 不进 git，每次改完 SKILL.md 重新打即可。
+
+### Skill 内的相对路径
+
+SKILL.md 用 `../../../README.md` 和 `../../../docs/template.md` 引用主仓文档。在 **Cursor** / **Claude Code（同 repo）** 这两种「skill 在 repo 内」的模式下都能正确 resolve（路径深度同样是 3 层 up 到 repo 根）。
+
+但在 **用户级 `~/.claude/skills/`** 或 **Claude Desktop / web 上传 ZIP** 这两种「skill 脱离 repo」的模式下，相对路径会失效 —— 此时 agent 需要改用 GitHub raw URL 抓取被引用的文件：
+
+- `https://raw.githubusercontent.com/HumbleF/yuni-travelnote/main/README.md`
+- `https://raw.githubusercontent.com/HumbleF/yuni-travelnote/main/docs/template.md`
+
 ## 后续工作流
 
 ```text
