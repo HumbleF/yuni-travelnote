@@ -3,6 +3,7 @@ title: 绍兴
 slug: shaoxing
 continent: 亚洲
 country: 中国
+region: 浙江
 cover: /covers/shaoxing/cover.jpg
 tags: [古城, 人文, 黄酒, 慢生活]
 bestSeason: 春 (3-5 月) / 秋 (9-11 月)

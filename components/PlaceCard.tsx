@@ -30,6 +30,7 @@ export function PlaceCard({ place }: { place: PlaceMeta }) {
         {place.country && (
           <span className="absolute left-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
             {place.country}
+            {place.region ? ` · ${place.region}` : ""}
           </span>
         )}
       </div>

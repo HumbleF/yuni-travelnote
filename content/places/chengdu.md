@@ -3,6 +3,7 @@ title: 成都
 slug: chengdu
 continent: 亚洲
 country: 中国
+region: 四川
 cover: /covers/chengdu/cover.jpg
 tags: [美食, 慢生活, 熊猫, 茶馆]
 bestSeason: 春 (3-5 月) / 秋 (9-11 月)

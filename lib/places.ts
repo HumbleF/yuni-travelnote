@@ -52,11 +52,58 @@ export const CONTINENT_BY_SLUG: Record<string, Continent> = Object.entries(
   return acc;
 }, {});
 
+export const COUNTRY_META: Record<
+  string,
+  { slug: string; en: string; flag: string }
+> = {
+  中国: { slug: "china", en: "China", flag: "🇨🇳" },
+  日本: { slug: "japan", en: "Japan", flag: "🇯🇵" },
+  韩国: { slug: "korea", en: "Korea", flag: "🇰🇷" },
+};
+
+export const COUNTRY_BY_SLUG: Record<string, string> = Object.entries(
+  COUNTRY_META,
+).reduce<Record<string, string>>((acc, [country, meta]) => {
+  acc[meta.slug] = country;
+  return acc;
+}, {});
+
+export const REGION_META: Record<string, { slug: string; en: string }> = {
+  江西: { slug: "jiangxi", en: "Jiangxi" },
+  浙江: { slug: "zhejiang", en: "Zhejiang" },
+  四川: { slug: "sichuan", en: "Sichuan" },
+};
+
+export const REGION_BY_SLUG: Record<string, string> = Object.entries(
+  REGION_META,
+).reduce<Record<string, string>>((acc, [region, meta]) => {
+  acc[meta.slug] = region;
+  return acc;
+}, {});
+
+function fallbackSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[\s·・]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function countrySlug(country: string): string {
+  return COUNTRY_META[country]?.slug ?? (fallbackSlug(country) || "unknown");
+}
+
+export function regionSlug(region: string): string {
+  return REGION_META[region]?.slug ?? (fallbackSlug(region) || "unknown");
+}
+
 export interface PlaceMeta {
   slug: string;
   title: string;
   continent: Continent;
   country?: string;
+  region?: string;
   cover?: string;
   tags?: string[];
   bestSeason?: string;
@@ -93,6 +140,19 @@ function normalizeContinent(value: unknown): Continent {
   return aliases[value.toLowerCase()] ?? "其他";
 }
 
+function normalizeCountry(value: unknown): { country?: string; region?: string } {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return {};
+  }
+  const trimmed = value.trim();
+  // 兼容历史写法 "中国 · 江西" / "中国·浙江" / "中国, 四川" — 自动拆分主国 + 省份
+  const match = trimmed.match(/^([^·・,，\s]+)\s*[·・,，]\s*(.+)$/);
+  if (match) {
+    return { country: match[1].trim(), region: match[2].trim() };
+  }
+  return { country: trimmed };
+}
+
 function readPlaceFile(file: string): { meta: PlaceMeta; raw: string } {
   const slug = file.replace(/\.md$/, "");
   const filepath = path.join(PLACES_DIR, file);
@@ -100,11 +160,20 @@ function readPlaceFile(file: string): { meta: PlaceMeta; raw: string } {
   const parsed = matter(fileContent);
   const data = parsed.data as Partial<PlaceMeta> & { continent?: unknown };
 
+  const { country: parsedCountry, region: parsedRegion } = normalizeCountry(
+    data.country,
+  );
+  const region =
+    typeof data.region === "string" && data.region.trim().length > 0
+      ? data.region.trim()
+      : parsedRegion;
+
   const meta: PlaceMeta = {
     slug: typeof data.slug === "string" && data.slug.length > 0 ? data.slug : slug,
     title: typeof data.title === "string" ? data.title : slug,
     continent: normalizeContinent(data.continent),
-    country: data.country,
+    country: parsedCountry,
+    region,
     cover: data.cover,
     tags: Array.isArray(data.tags) ? data.tags : undefined,
     bestSeason: data.bestSeason,
@@ -150,6 +219,92 @@ export function getPlacesGroupedByContinent(): ContinentGroup[] {
 
 export function getPlacesByContinent(continent: Continent): PlaceMeta[] {
   return getAllPlaces().filter((p) => p.continent === continent);
+}
+
+export interface CountryGroup {
+  country: string;
+  slug: string;
+  en: string;
+  flag: string;
+  places: PlaceMeta[];
+}
+
+export function getCountriesByContinent(continent: Continent): CountryGroup[] {
+  const places = getPlacesByContinent(continent);
+  const map = new Map<string, PlaceMeta[]>();
+  for (const p of places) {
+    const key = p.country ?? "未分类";
+    const list = map.get(key) ?? [];
+    list.push(p);
+    map.set(key, list);
+  }
+  return Array.from(map.entries())
+    .map(([country, list]) => {
+      const meta = COUNTRY_META[country];
+      return {
+        country,
+        slug: meta?.slug ?? countrySlug(country),
+        en: meta?.en ?? country,
+        flag: meta?.flag ?? "🌐",
+        places: list,
+      };
+    })
+    .sort((a, b) => b.places.length - a.places.length || a.country.localeCompare(b.country, "zh-Hans-CN"));
+}
+
+export function getPlacesByCountry(country: string): PlaceMeta[] {
+  return getAllPlaces().filter((p) => p.country === country);
+}
+
+export interface RegionGroup {
+  region: string;
+  slug: string;
+  en: string;
+  places: PlaceMeta[];
+}
+
+export function getRegionsByCountry(country: string): RegionGroup[] {
+  const places = getPlacesByCountry(country).filter((p) => p.region);
+  const map = new Map<string, PlaceMeta[]>();
+  for (const p of places) {
+    const key = p.region!;
+    const list = map.get(key) ?? [];
+    list.push(p);
+    map.set(key, list);
+  }
+  return Array.from(map.entries())
+    .map(([region, list]) => {
+      const meta = REGION_META[region];
+      return {
+        region,
+        slug: meta?.slug ?? regionSlug(region),
+        en: meta?.en ?? region,
+        places: list,
+      };
+    })
+    .sort((a, b) => b.places.length - a.places.length || a.region.localeCompare(b.region, "zh-Hans-CN"));
+}
+
+export function getPlacesByRegion(country: string, region: string): PlaceMeta[] {
+  return getAllPlaces().filter(
+    (p) => p.country === country && p.region === region,
+  );
+}
+
+export function findCountryByContinentAndSlug(
+  continent: Continent,
+  countrySlugParam: string,
+): string | null {
+  const countries = getCountriesByContinent(continent);
+  return countries.find((c) => c.slug === countrySlugParam)?.country ?? null;
+}
+
+export function findRegionByCountryAndSlug(
+  country: string,
+  regionSlugParam: string,
+): string | null {
+  const regions = getRegionsByCountry(country);
+  return regions.find((r) => r.slug === regionSlugParam)?.region ?? null;
 }
 
 export function getAllPlaceSlugs(): string[] {

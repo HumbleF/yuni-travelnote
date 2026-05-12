@@ -2,7 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { MarkdownContent } from "@/components/MarkdownContent";
-import { getAllPlaceSlugs, getPlaceBySlug } from "@/lib/places";
+import {
+  CONTINENT_META,
+  COUNTRY_META,
+  REGION_META,
+  getAllPlaceSlugs,
+  getPlaceBySlug,
+} from "@/lib/places";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -60,11 +66,62 @@ export default async function PlaceDetailPage({ params }: PageProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0">
             <div className="mx-auto max-w-3xl px-6 pb-8 text-white">
-              {place.country && (
-                <span className="inline-block rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium backdrop-blur">
-                  {place.country}
-                </span>
-              )}
+              {(() => {
+                const continentMeta = CONTINENT_META[place.continent];
+                const countryMeta = place.country
+                  ? COUNTRY_META[place.country]
+                  : undefined;
+                const regionMeta = place.region
+                  ? REGION_META[place.region]
+                  : undefined;
+                const crumbs: { label: string; href?: string }[] = [
+                  { label: place.continent, href: `/continents/${continentMeta.slug}` },
+                ];
+                if (place.country) {
+                  crumbs.push({
+                    label: place.country,
+                    href: countryMeta
+                      ? `/continents/${continentMeta.slug}/${countryMeta.slug}`
+                      : undefined,
+                  });
+                }
+                if (place.country && place.region) {
+                  crumbs.push({
+                    label: place.region,
+                    href: countryMeta && regionMeta
+                      ? `/continents/${continentMeta.slug}/${countryMeta.slug}/${regionMeta.slug}`
+                      : undefined,
+                  });
+                }
+                return (
+                  <nav
+                    aria-label="面包屑导航"
+                    className="flex flex-wrap items-center gap-1.5 text-xs font-medium"
+                  >
+                    {crumbs.map((c, i) => (
+                      <span key={i} className="flex items-center gap-1.5">
+                        {c.href ? (
+                          <Link
+                            href={c.href}
+                            className="rounded-full bg-white/20 px-2.5 py-1 backdrop-blur transition-colors hover:bg-white/30"
+                          >
+                            {c.label}
+                          </Link>
+                        ) : (
+                          <span className="rounded-full bg-white/20 px-2.5 py-1 backdrop-blur">
+                            {c.label}
+                          </span>
+                        )}
+                        {i < crumbs.length - 1 && (
+                          <span className="text-white/60" aria-hidden>
+                            ›
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </nav>
+                );
+              })()}
               <h1 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight">
                 {place.title}
               </h1>

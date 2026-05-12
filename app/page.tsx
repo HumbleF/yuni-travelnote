@@ -135,9 +135,12 @@ export default function HomePage() {
                         {group.continent}
                       </h2>
                     </div>
-                    <span className="text-sm text-muted shrink-0">
-                      {group.places.length} 个地点
-                    </span>
+                    <Link
+                      href={`/continents/${meta.slug}`}
+                      className="text-sm text-muted shrink-0 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                    >
+                      按国家浏览 {group.places.length} 个地点 →
+                    </Link>
                   </header>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
