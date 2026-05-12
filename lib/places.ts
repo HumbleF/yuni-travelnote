@@ -59,6 +59,7 @@ export const COUNTRY_META: Record<
   中国: { slug: "china", en: "China", flag: "🇨🇳" },
   日本: { slug: "japan", en: "Japan", flag: "🇯🇵" },
   韩国: { slug: "korea", en: "Korea", flag: "🇰🇷" },
+  捷克: { slug: "czech", en: "Czechia", flag: "🇨🇿" },
 };
 
 export const COUNTRY_BY_SLUG: Record<string, string> = Object.entries(
