@@ -74,12 +74,14 @@ let _registry: {
 let _allPlacesCache: PlaceMeta[] | null = null;
 
 function fallbackSlug(value: string): string {
-  return value
+  const ascii = value
     .toLowerCase()
     .replace(/[\s·・]+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
+  if (ascii) return ascii;
+  return encodeURIComponent(value).toLowerCase().replace(/%/g, "").slice(0, 32);
 }
 
 
