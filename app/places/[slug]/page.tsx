@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { MarkdownContent } from "@/components/MarkdownContent";
 import {
   CONTINENT_META,
-  COUNTRY_META,
-  REGION_META,
+  getCountryMeta,
+  getRegionMeta,
   getAllPlaceSlugs,
   getPlaceBySlug,
 } from "@/lib/places";
@@ -69,10 +69,10 @@ export default async function PlaceDetailPage({ params }: PageProps) {
               {(() => {
                 const continentMeta = CONTINENT_META[place.continent];
                 const countryMeta = place.country
-                  ? COUNTRY_META[place.country]
+                  ? getCountryMeta(place.country)
                   : undefined;
                 const regionMeta = place.region
-                  ? REGION_META[place.region]
+                  ? getRegionMeta(place.region)
                   : undefined;
                 const crumbs: { label: string; href?: string }[] = [
                   { label: place.continent, href: `/continents/${continentMeta.slug}` },

@@ -52,36 +52,25 @@ export const CONTINENT_BY_SLUG: Record<string, Continent> = Object.entries(
   return acc;
 }, {});
 
-export const COUNTRY_META: Record<
-  string,
-  { slug: string; en: string; flag: string }
-> = {
-  中国: { slug: "china", en: "China", flag: "🇨🇳" },
-  日本: { slug: "japan", en: "Japan", flag: "🇯🇵" },
-  韩国: { slug: "korea", en: "Korea", flag: "🇰🇷" },
-  捷克: { slug: "czech", en: "Czechia", flag: "🇨🇿" },
-  澳大利亚: { slug: "australia", en: "Australia", flag: "🇦🇺" },
-};
+export interface CountryInfo {
+  country: string;
+  slug: string;
+  en: string;
+  flag: string;
+}
 
-export const COUNTRY_BY_SLUG: Record<string, string> = Object.entries(
-  COUNTRY_META,
-).reduce<Record<string, string>>((acc, [country, meta]) => {
-  acc[meta.slug] = country;
-  return acc;
-}, {});
+export interface RegionInfo {
+  region: string;
+  slug: string;
+  en: string;
+}
 
-export const REGION_META: Record<string, { slug: string; en: string }> = {
-  江西: { slug: "jiangxi", en: "Jiangxi" },
-  浙江: { slug: "zhejiang", en: "Zhejiang" },
-  四川: { slug: "sichuan", en: "Sichuan" },
-};
+let _registry: {
+  countries: Map<string, CountryInfo>;
+  regions: Map<string, RegionInfo>;
+} | null = null;
 
-export const REGION_BY_SLUG: Record<string, string> = Object.entries(
-  REGION_META,
-).reduce<Record<string, string>>((acc, [region, meta]) => {
-  acc[meta.slug] = region;
-  return acc;
-}, {});
+let _allPlacesCache: PlaceMeta[] | null = null;
 
 function fallbackSlug(value: string): string {
   return value
@@ -92,13 +81,6 @@ function fallbackSlug(value: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function countrySlug(country: string): string {
-  return COUNTRY_META[country]?.slug ?? (fallbackSlug(country) || "unknown");
-}
-
-export function regionSlug(region: string): string {
-  return REGION_META[region]?.slug ?? (fallbackSlug(region) || "unknown");
-}
 
 export interface PlaceMeta {
   slug: string;
@@ -155,12 +137,20 @@ function normalizeCountry(value: unknown): { country?: string; region?: string }
   return { country: trimmed };
 }
 
-function readPlaceFile(file: string): { meta: PlaceMeta; raw: string } {
+function readPlaceFile(file: string): {
+  meta: PlaceMeta;
+  raw: string;
+  countryFlag?: string;
+  countryEn?: string;
+  countrySlug?: string;
+  regionEn?: string;
+  regionSlug?: string;
+} {
   const slug = file.replace(/\.md$/, "");
   const filepath = path.join(PLACES_DIR, file);
   const fileContent = fs.readFileSync(filepath, "utf-8");
   const parsed = matter(fileContent);
-  const data = parsed.data as Partial<PlaceMeta> & { continent?: unknown };
+  const data = parsed.data as Record<string, unknown>;
 
   const { country: parsedCountry, region: parsedRegion } = normalizeCountry(
     data.country,
@@ -176,26 +166,121 @@ function readPlaceFile(file: string): { meta: PlaceMeta; raw: string } {
     continent: normalizeContinent(data.continent),
     country: parsedCountry,
     region,
-    cover: data.cover,
+    cover: typeof data.cover === "string" ? data.cover : undefined,
     tags: Array.isArray(data.tags) ? data.tags : undefined,
-    bestSeason: data.bestSeason,
-    duration: data.duration,
-    budget: data.budget,
-    summary: data.summary,
+    bestSeason: typeof data.bestSeason === "string" ? data.bestSeason : undefined,
+    duration: typeof data.duration === "string" ? data.duration : undefined,
+    budget: typeof data.budget === "string" ? data.budget : undefined,
+    summary: typeof data.summary === "string" ? data.summary : undefined,
   };
 
-  return { meta, raw: parsed.content };
+  return {
+    meta,
+    raw: parsed.content,
+    countryFlag: typeof data.countryFlag === "string" ? data.countryFlag : undefined,
+    countryEn: typeof data.countryEn === "string" ? data.countryEn : undefined,
+    countrySlug: typeof data.countrySlug === "string" ? data.countrySlug : undefined,
+    regionEn: typeof data.regionEn === "string" ? data.regionEn : undefined,
+    regionSlug: typeof data.regionSlug === "string" ? data.regionSlug : undefined,
+  };
 }
 
-export function getAllPlaces(): PlaceMeta[] {
+function buildRegistry(): typeof _registry & {} {
   ensureDir();
   const files = fs
     .readdirSync(PLACES_DIR)
-    .filter((f) => f.endsWith(".md"));
+    .filter((f) => f.endsWith(".md"))
+    .sort();
 
-  return files
-    .map((file) => readPlaceFile(file).meta)
-    .sort((a, b) => a.title.localeCompare(b.title, "zh-Hans-CN"));
+  const countries = new Map<string, CountryInfo>();
+  const regions = new Map<string, RegionInfo>();
+  const allPlaces: PlaceMeta[] = [];
+
+  for (const file of files) {
+    const { meta, countryFlag, countryEn, countrySlug, regionEn, regionSlug } =
+      readPlaceFile(file);
+    allPlaces.push(meta);
+
+    if (meta.country && !countries.has(meta.country)) {
+      const slug =
+        countrySlug ||
+        (countryEn ? fallbackSlug(countryEn) : "") ||
+        fallbackSlug(meta.country) ||
+        "unknown";
+      countries.set(meta.country, {
+        country: meta.country,
+        slug,
+        en: countryEn || meta.country,
+        flag: countryFlag || "🌐",
+      });
+    }
+
+    if (meta.region && !regions.has(meta.region)) {
+      const slug =
+        regionSlug ||
+        (regionEn ? fallbackSlug(regionEn) : "") ||
+        fallbackSlug(meta.region) ||
+        "unknown";
+      regions.set(meta.region, {
+        region: meta.region,
+        slug,
+        en: regionEn || meta.region,
+      });
+    }
+  }
+
+  _allPlacesCache = allPlaces.sort((a, b) =>
+    a.title.localeCompare(b.title, "zh-Hans-CN"),
+  );
+
+  return { countries, regions };
+}
+
+function getRegistry() {
+  if (!_registry) {
+    _registry = buildRegistry();
+  }
+  return _registry;
+}
+
+export function getCountryMeta(country: string): CountryInfo {
+  const reg = getRegistry();
+  return reg.countries.get(country) ?? {
+    country,
+    slug: fallbackSlug(country) || "unknown",
+    en: country,
+    flag: "🌐",
+  };
+}
+
+export function getRegionMeta(region: string): RegionInfo {
+  const reg = getRegistry();
+  return reg.regions.get(region) ?? {
+    region,
+    slug: fallbackSlug(region) || "unknown",
+    en: region,
+  };
+}
+
+export function findCountryBySlug(slug: string): string | null {
+  const reg = getRegistry();
+  for (const [country, info] of reg.countries) {
+    if (info.slug === slug) return country;
+  }
+  return null;
+}
+
+export function findRegionBySlug(slug: string): string | null {
+  const reg = getRegistry();
+  for (const [region, info] of reg.regions) {
+    if (info.slug === slug) return region;
+  }
+  return null;
+}
+
+export function getAllPlaces(): PlaceMeta[] {
+  getRegistry();
+  return _allPlacesCache!;
 }
 
 export interface ContinentGroup {
@@ -242,16 +327,20 @@ export function getCountriesByContinent(continent: Continent): CountryGroup[] {
   }
   return Array.from(map.entries())
     .map(([country, list]) => {
-      const meta = COUNTRY_META[country];
+      const meta = getCountryMeta(country);
       return {
         country,
-        slug: meta?.slug ?? countrySlug(country),
-        en: meta?.en ?? country,
-        flag: meta?.flag ?? "🌐",
+        slug: meta.slug,
+        en: meta.en,
+        flag: meta.flag,
         places: list,
       };
     })
-    .sort((a, b) => b.places.length - a.places.length || a.country.localeCompare(b.country, "zh-Hans-CN"));
+    .sort(
+      (a, b) =>
+        b.places.length - a.places.length ||
+        a.country.localeCompare(b.country, "zh-Hans-CN"),
+    );
 }
 
 export function getPlacesByCountry(country: string): PlaceMeta[] {
@@ -276,15 +365,19 @@ export function getRegionsByCountry(country: string): RegionGroup[] {
   }
   return Array.from(map.entries())
     .map(([region, list]) => {
-      const meta = REGION_META[region];
+      const meta = getRegionMeta(region);
       return {
         region,
-        slug: meta?.slug ?? regionSlug(region),
-        en: meta?.en ?? region,
+        slug: meta.slug,
+        en: meta.en,
         places: list,
       };
     })
-    .sort((a, b) => b.places.length - a.places.length || a.region.localeCompare(b.region, "zh-Hans-CN"));
+    .sort(
+      (a, b) =>
+        b.places.length - a.places.length ||
+        a.region.localeCompare(b.region, "zh-Hans-CN"),
+    );
 }
 
 export function getPlacesByRegion(country: string, region: string): PlaceMeta[] {
