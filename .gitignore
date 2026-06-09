@@ -45,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI assistant local config
+.claude/
+
+# AI agent working docs
+docs/superpowers/

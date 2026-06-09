@@ -9,7 +9,6 @@ import {
   getPlacesGroupedByContinent,
 } from "@/lib/places";
 import "./globals.css";
-
 export const metadata: Metadata = {
   title: {
     default: "芋泥今天去哪里",
