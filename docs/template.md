@@ -4,10 +4,7 @@
 >
 > 文风：**客观信息**（价格 / 地址 / 时间 / 用时）走中性表格化；**提示 / 避雷 / 真心话** 用第一人称口语化，让人感觉是"刚去过的朋友写的"，不是百度百科。
 
-> 配套规则在主仓 [README.md](../README.md)：
-> - [内容质量红线](../README.md#内容质量红线写攻略前必读)（禁词词典 / 强制具体化 / 第一人称真心话）
-> - [图片处理](../README.md#图片处理必读--写新攻略前看这一节)（自托管 / 命名 / 取图流程 / 三重验证）
-> - [自查清单](../README.md#自查清单提交前跑)（提交前必跑的 ripgrep 命令）
+> 写攻略前必看本文的 [内容质量红线](#内容质量红线写攻略前必读) 和 [图片处理](#图片处理必读--写新攻略前看这一节) 两节。
 
 ---
 
@@ -401,6 +398,166 @@ summary: 千年古都，寺庙和町屋错落，是体验"另一个日本"最浓
 
 ---
 
+## 内容质量红线（写攻略前必读）
+
+旅游攻略最容易翻车的不是排版，而是写成"百度百科式废话"。以下三条红线必须遵守，写完自己扫一遍。
+
+### 红线 1 · 禁止形容词词典
+
+下面这些词在攻略里出现 = 这一句信息密度为 0，请删掉或改写：
+
+```text
+值得一去 / 不容错过 / 必打卡 / 美轮美奂 / 流连忘返 / 心灵的洗礼 /
+人间仙境 / 美不胜收 / 令人陶醉 / 别有一番风味 / 古色古香 /
+有着悠久的历史 / 是一座美丽的城市 / 是绝佳的选择 / 给您留下难忘的回忆
+```
+
+写完用 ripgrep 自查一遍：
+
+```powershell
+rg -n "值得一去|不容错过|必打卡|美轮美奂|流连忘返|心灵的洗礼|人间仙境|美不胜收|令人陶醉|别有一番风味|古色古香|有着悠久的历史|是一座美丽的城市|是绝佳的选择|给您留下难忘的回忆" content/places/<slug>.md
+```
+
+期望输出：**0 行匹配**。
+
+### 红线 2 · 强制具体化（数字 + 单位 + 出处）
+
+| 维度 | 反面教材 | 正面写法 |
+| --- | --- | --- |
+| 时间 | "上午去清水寺" | "**8:00-9:30** 去清水寺，10 点后旅游团人量翻倍" |
+| 地点 | "祇园附近的小桥" | "**祇园四条站 9 号出口** 步行 4 min 的白川南通 巽桥" |
+| 价格 | "门票不贵" | "**500 JPY (≈25 元)，2024 年 11 月价**" |
+| 用时 | "走一会儿就到" | "步行 **12 min**（含红绿灯），打车 **¥800 / 5 min**" |
+| 排队 | "人很多" | "工作日 9:00 入场要排 **20 min**，周末翻倍至 **45 min**" |
+
+### 红线 3 · 每节末尾建议加 30-80 字第一人称真心话
+
+客观信息表格之后，用一段口语化真心话告诉读者**你的真实感受 + 哪条经验只有去过才知道**。这一段比前面所有的客观数据都更打动人。
+
+```markdown
+> 我那天 7 点到伏见稻荷，走到"奥社奉拜所"就回头了 ——
+> 大部分游客根本不会走到山顶（来回 2.5h），中段已经基本没人；
+> 千本鸟居最密集的那一段就在前 200 m，早起拍完直接撤是最优解。
+```
+
+### 自查清单（提交前跑）
+
+```powershell
+# 形容词扫描（应该 0 匹配）
+rg -n "值得一去|不容错过|必打卡|美轮美奂|流连忘返|心灵的洗礼|有着悠久的历史" content/places/<slug>.md
+
+# 占位符扫描（HTML 注释和 ... 应该 0 匹配，注释只是写时的约束，发布前删掉）
+rg -n "<!--|^\.\.\.$" content/places/<slug>.md
+
+# 必填章节扫描（每个二级标题都应该出现）
+rg -n "^## (一句话点评|关于|真实预算|行程建议|景点分级|出片机位|美食|预约购票|交通|住宿|打包清单|实用信息|避雷集合|写在最后)" content/places/<slug>.md
+```
+
+---
+
+## 图片处理（必读 · 写新攻略前看这一节）
+
+> 历史教训：早期版本图片全部用 `images.unsplash.com/photo-<id>` 外链，结果 8/15 ID 不存在直接 404，剩下 7 张 CDN 返回 200 但内容是随机命中的缓存图（甚至出现过一张蛇照片）。**禁止再用外链图。**
+
+> **默认行为约定（给 AI agent / 自己写攻略时）**：用户说"新增 / 加一个 / 帮我写 X"时，**默认动作 = markdown + 取图 一体执行**，不需要事前问"要不要取图"。下文的标准取图流程是默认动作而非可选项。**只有用户明确写"先不取图 / 占位先"时才跳过**。
+
+### 黄金规则
+
+1. **所有图片必须自托管在 `public/covers/<slug>/` 下**，markdown 里只引用 `/covers/<slug>/<name>.{jpg,png,webp}`
+2. **不要凭印象猜 Unsplash / Pexels / 任何 CDN 的 photo ID**。CDN 对不存在 ID 的回包行为不可预测
+3. **下载后必须本地验证**：`curl -I http://localhost:3000/covers/<slug>/<name>.jpg` 必须看到 `200` + `Content-Type: image/...`
+
+### 命名约定
+
+```text
+public/covers/<slug>/
+├── cover.jpg          # 首页卡片 + 详情页 hero
+├── 01-<theme>.jpg     # 正文第 1 张配图，主题用英文短词，比如 01-shibuya
+├── 02-<theme>.jpg
+└── 03-<theme>.jpg
+```
+
+markdown 里这样引用（路径以 `/` 开头，是 Next.js 静态资源约定）：
+
+```markdown
+![涩谷十字路口](/covers/tokyo/01-shibuya.jpg)
+```
+
+### 标准取图流程（PowerShell · 国内可用）
+
+适合在中国大陆网络环境（Wikimedia / Pexels API / 直连 GitHub 大概率被拦），用 `cn.bing.com` 图搜兜底：
+
+1. **按主题写一组英文搜索词**，比如：
+   - `tokyo` → `tokyo skyline night cityscape`
+   - `tokyo/01-shibuya` → `shibuya crossing tokyo crowd`
+   - `shaoxing/02-lanting` → `lanting orchid pavilion shaoxing`
+
+2. **抓 Bing 图搜结果页**：
+
+   ```powershell
+   $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+   curl.exe -s -A $ua --max-time 12 -o tmp.html `
+     ("https://cn.bing.com/images/search?q=" + [System.Uri]::EscapeDataString("shibuya crossing tokyo crowd") + "&form=HDRSC2")
+   ```
+
+3. **从 HTML 里抽真实图源 URL**（Bing 把原图地址放在 `mediaurl=` 参数里）：
+
+   ```powershell
+   $page = Get-Content tmp.html -Raw
+   $urls = [regex]::Matches($page, 'mediaurl=([^&]+)') |
+           ForEach-Object { [System.Uri]::UnescapeDataString($_.Groups[1].Value) } |
+           Select-Object -Unique
+   ```
+
+4. **过滤水印图源**（这些站点每张图都有大水印，无法直接用）：
+
+   ```text
+   dreamstime, alamy, shutterstock, gettyimages, istockphoto,
+   123rf, depositphotos, fotolia, stock.adobe
+   ```
+
+5. **逐个下载，第一张 ≥ 30KB 且能成功落盘的就采纳**，存到 `public/covers/<slug>/<name>.<ext>`（保留原扩展名 jpg/png/webp）
+
+6. **三重验证**：
+   - 文件大小 > 30KB（小于这个基本是错误页 / 占位图）
+   - 文件头 magic bytes：JPEG = `FF D8 FF`, PNG = `89 50 4E 47`, WebP = `52 49 46 46`
+   - 通过 dev server 拉一遍：`curl -o nul -w "%{http_code} %{content_type}" http://localhost:3000/covers/...`
+
+### 推荐主题搜索词（避免出现意外内容）
+
+写搜索词时**越具体越好**，避免单词如 `china` / `food` 这种宽泛词，否则搜出来什么都有。参考：
+
+| 想要的画面 | 推荐搜索词 |
+| --- | --- |
+| 江南水乡 | `jiangnan water village stone bridge canal` |
+| 兰亭 | `lanting orchid pavilion shaoxing wang xizhi` |
+| 安昌古镇 | `anchang ancient town shaoxing` |
+| 涩谷十字路口 | `shibuya crossing tokyo crowd` |
+| 浅草寺 | `sensoji temple kaminarimon asakusa` |
+| 川菜火锅 | `sichuan hotpot red soup` |
+| 大熊猫 | `chengdu giant panda bamboo` |
+
+### 验证清单（写完攻略要跑一遍）
+
+```powershell
+# 1. 三个 md 不应有任何外链图
+rg -n "https?://[^)]+\.(jpg|jpeg|png|webp|gif)" content/places/
+
+# 2. dev server 能把所有图片以 200 + image/* MIME 返回
+$urls = rg -oNI "/covers/[^\"\\s)]+" content/places/ -t md
+foreach ($u in $urls) {
+  curl.exe -s -o nul -w "$u  %{http_code} %{content_type}`n" "http://localhost:3000$u"
+}
+
+# 3. 渲染后的页面 HTML 也不应残留外链
+curl.exe -s "http://localhost:3000/places/<slug>" | rg "images\.unsplash\.com|images\.pexels\.com" -c
+# 期望输出: 0
+```
+
+三条都过 → 收工。
+
+---
+
 ## Front-matter 字段说明
 
 | 字段 | 必填 | 说明 |
@@ -410,7 +567,7 @@ summary: 千年古都，寺庙和町屋错落，是体验"另一个日本"最浓
 | `slug` | 否 | URL slug，不写就用文件名 |
 | `country` | 否 | 国家 / 所在地，会出现在卡片右上角和详情页徽章。支持 `中国 · 浙江` 格式自动拆分国家+省份 |
 | `region` | 否 | 省份 / 地区（国内城市用），也可写在 country 字段用 `·` 分隔自动识别 |
-| `cover` | 否（schema） | 封面图路径，例如 `/covers/tokyo/cover.jpg`；不填用渐变 + 首字 fallback。**workflow 默认会填**，见 [README · 图片处理](../README.md#图片处理必读--写新攻略前看这一节) |
+| `cover` | 否（schema） | 封面图路径，例如 `/covers/tokyo/cover.jpg`；不填用渐变 + 首字 fallback。**workflow 默认会填**，见上方 [图片处理](#图片处理必读--写新攻略前看这一节) |
 | `tags` | 否 | 标签数组 |
 | `bestSeason` | 否 | 最佳旅行季节 |
 | `duration` | 否 | 建议天数 |
