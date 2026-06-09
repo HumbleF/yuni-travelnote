@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NavDestinations, type NavContinentItem } from "@/components/NavDestinations";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   CONTINENT_META,
   CONTINENT_ORDER,
@@ -35,8 +37,16 @@ export default function RootLayout({
   });
 
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')})()`,
+          }}
+        />
+      </head>
       <body className="min-h-screen font-sans">
+        <ThemeProvider>
         <header className="sticky top-0 z-30 backdrop-blur bg-[rgb(var(--background))]/70 border-b border-card">
           <nav className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
             <Link
@@ -51,16 +61,9 @@ export default function RootLayout({
               </span>
               芋泥今天去哪里
             </Link>
-            <div className="flex items-center gap-6 text-sm text-muted">
+            <div className="flex items-center gap-4 text-sm text-muted">
               <NavDestinations items={navItems} />
-              <a
-                href="https://nextjs.org"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[rgb(var(--foreground))] transition-colors"
-              >
-                关于
-              </a>
+              <ThemeToggle />
             </div>
           </nav>
         </header>
@@ -73,6 +76,7 @@ export default function RootLayout({
             <span>每一次出发，都从一份手写攻略开始。</span>
           </div>
         </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

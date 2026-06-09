@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PlaceCard } from "@/components/PlaceCard";
+import { PlaceExplorer } from "@/components/PlaceExplorer";
 import {
   CONTINENT_META,
   CONTINENT_ORDER,
@@ -45,6 +46,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-20 space-y-16">
+        <PlaceExplorer places={getAllPlaces()} />
         {groups.length === 0 ? (
           <div className="mt-10 rounded-2xl border border-dashed border-card p-12 text-center text-muted">
             <p className="text-base">
