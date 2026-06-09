@@ -3,6 +3,9 @@ title: 首尔
 slug: seoul
 continent: 亚洲
 country: 韩国
+countryFlag: 🇰🇷
+countryEn: Korea
+countrySlug: korea
 cover: /covers/seoul/cover.jpg
 tags: [秋枫, 银杏, 都市, 美食, 古宫, 韩屋]
 bestSeason: 10 月 25 日-11 月 10 日秋枫银杏黄金期 / 3 月底-4 月初樱花（避开 10/3 开天节、10/9 韩文节连休）

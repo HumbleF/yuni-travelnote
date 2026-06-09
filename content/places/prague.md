@@ -3,6 +3,9 @@ title: 布拉格
 slug: prague
 continent: 欧洲
 country: 捷克
+countryFlag: 🇨🇿
+countryEn: Czechia
+countrySlug: czech
 cover: /covers/prague/cover.jpg
 tags: [古城, 摄影, 黑啤, 千塔之都, 世界遗产, 中欧]
 bestSeason: 5 月底-6 月底初夏 / 9 月底-10 月中金秋 / 12 月初圣诞市集（避开 7-8 月旺季 + 12 月最后两周人挤）

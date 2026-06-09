@@ -4,6 +4,8 @@ slug: moganshan
 continent: 亚洲
 country: 中国
 region: 浙江
+regionEn: Zhejiang
+regionSlug: zhejiang
 cover: /covers/moganshan/cover.jpg
 tags: [山林, 民宿, 周末游, 避暑, 骑行, 星空]
 bestSeason: 4 月底-6 月初春末初夏 / 9 月中-10 月底秋高气爽

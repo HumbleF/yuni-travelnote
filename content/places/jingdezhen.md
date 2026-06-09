@@ -4,6 +4,8 @@ slug: jingdezhen
 continent: 亚洲
 country: 中国
 region: 江西
+regionEn: Jiangxi
+regionSlug: jiangxi
 cover: /covers/jingdezhen/cover.jpg
 tags: [陶瓷, 文化, 周末游, 拉坯DIY, 老厂房, 公共交通]
 bestSeason: 4 月中-5 月底春末 / 9 月中-11 月初秋高气爽（10 月中旬国际陶瓷博览会避开）

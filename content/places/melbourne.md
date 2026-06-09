@@ -3,6 +3,9 @@ title: 墨尔本
 slug: melbourne
 continent: 大洋洲
 country: 澳大利亚
+countryFlag: 🇦🇺
+countryEn: Australia
+countrySlug: australia
 cover: /covers/melbourne/cover.jpg
 tags: [咖啡, 涂鸦巷, 文艺, 美术馆, 维多利亚拱廊, 城市游]
 bestSeason: 9 月底-11 月底春季 / 3 月初-5 月初秋季（澳网 1 月 + 圣诞 12/26 节礼日避开）

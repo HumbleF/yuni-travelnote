@@ -3,6 +3,9 @@ title: 东京
 slug: tokyo
 continent: 亚洲
 country: 日本
+countryFlag: 🇯🇵
+countryEn: Japan
+countrySlug: japan
 cover: /covers/tokyo/cover.jpg
 tags: [都市, 美食, 购物, 文化]
 bestSeason: 春樱 (3 月底-4 月初) / 秋叶 (11 月)
