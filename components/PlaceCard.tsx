@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { PlaceMeta } from "@/lib/places";
 
@@ -18,11 +19,12 @@ export function PlaceCard({ place }: { place: PlaceMeta }) {
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         {place.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={place.cover}
             alt={place.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <CoverFallback title={place.title} />

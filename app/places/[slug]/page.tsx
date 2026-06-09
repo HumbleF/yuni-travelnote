@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -8,6 +9,7 @@ import {
   getRegionMeta,
   getAllPlaceSlugs,
   getPlaceBySlug,
+  type Place,
 } from "@/lib/places";
 
 interface PageProps {
@@ -26,10 +28,33 @@ export async function generateMetadata({
   if (!place) {
     return { title: "未找到目的地" };
   }
+  const description = place.summary ?? `${place.title} 旅行攻略`;
   return {
     title: place.title,
-    description: place.summary ?? `${place.title} 旅行攻略`,
+    description,
+    openGraph: {
+      title: `${place.title} · 芋泥今天去哪里`,
+      description,
+      ...(place.cover ? { images: [{ url: place.cover }] } : {}),
+    },
   };
+}
+
+function PlaceJsonLd({ place }: { place: Place }) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: place.title,
+    description: place.summary ?? `${place.title} 旅行攻略`,
+    ...(place.cover ? { image: place.cover } : {}),
+    author: { "@type": "Person", name: "芋泥" },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 }
 
 function MetaItem({ label, value }: { label: string; value: string }) {
@@ -53,14 +78,17 @@ export default async function PlaceDetailPage({ params }: PageProps) {
 
   return (
     <article>
+      <PlaceJsonLd place={place} />
       <header className="relative">
         <div className="relative h-[42vh] min-h-[280px] w-full overflow-hidden bg-gradient-to-br from-brand-400 to-brand-700">
           {place.cover && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={place.cover}
               alt={place.title}
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

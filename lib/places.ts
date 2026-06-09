@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
+import { rehypeLazyImages } from "./rehype-lazy-images";
 
 const PLACES_DIR = path.join(process.cwd(), "content", "places");
 
@@ -425,6 +426,7 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
     .use(remarkGfm)
     .use(remarkRehype)
     .use(rehypeSlug)
+    .use(rehypeLazyImages)
     .use(rehypeStringify)
     .process(raw);
 
