@@ -9,15 +9,12 @@ countrySlug: china
 region: 江苏
 regionEn: Jiangsu
 regionSlug: jiangsu
-cover: /covers/suzhou/cover.jpg
 tags: [园林, 古镇, 江南, 美食, 出片]
 bestSeason: 3-4 月春花 / 9-11 月秋高气爽
 duration: 2-3 天
 budget: 1200-2000 元 / 人（含高铁，2 晚住宿）
 summary: 两千五百年的水城，园林甲天下。从拙政园的移步换景到平江路的桨声灯影，是离上海最近的"慢生活"切片。
 ---
-
-![平江路夜景](/covers/suzhou/cover.jpg)
 
 ## 速查卡
 
