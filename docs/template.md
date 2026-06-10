@@ -483,24 +483,41 @@ markdown 里这样引用（路径以 `/` 开头，是 Next.js 静态资源约定
 ![涩谷十字路口](/covers/tokyo/01-shibuya.jpg)
 ```
 
-### 标准取图流程（PowerShell · 国内可用）
+### 标准取图流程
 
-适合在中国大陆网络环境（Wikimedia / Pexels API / 直连 GitHub 大概率被拦），用 `cn.bing.com` 图搜兜底：
+> **核心教训**：Bing `mediaurl=` 在无 JS 渲染时返回大量无关 URL（广告 / 侧栏推荐 / 随机图源），仅凭文件大小和 magic bytes 无法判断内容是否正确。**每张图必须目视确认画面内容与目标地标一致后才能采纳。**
 
-1. **按主题写一组英文搜索词**，比如：
-   - `tokyo` → `tokyo skyline night cityscape`
-   - `tokyo/01-shibuya` → `shibuya crossing tokyo crowd`
-   - `shaoxing/02-lanting` → `lanting orchid pavilion shaoxing`
+#### 方式一：Unsplash 搜索（推荐，图片质量高且内容可控）
+
+1. 用 WebFetch 访问 `https://unsplash.com/s/photos/<关键词>`（关键词用英文连字符，如 `suzhou-garden`、`tiger-hill-suzhou`）
+2. 从页面中提取 `images.unsplash.com/photo-xxx` 开头的 URL
+3. 拼下载参数：`?fm=jpg&q=80&w=1600&auto=format&fit=crop`（控制尺寸和质量）
+4. 下载到本地，**用 Read 工具目视确认**画面内容正确
+5. 存到 `public/covers/<slug>/<name>.jpg`
+
+```powershell
+$ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+curl.exe -s -L -A $ua --max-time 15 -o "public/covers/<slug>/cover.jpg" `
+  "https://images.unsplash.com/photo-<id>?fm=jpg&q=80&w=1600&auto=format&fit=crop"
+```
+
+#### 方式二：Bing 图搜兜底（Unsplash 无结果时）
+
+适合中国大陆网络环境，用 `cn.bing.com` 图搜：
+
+1. **用中文搜索词**（比英文命中率高），加地标名 + 具体场景：
+   - `苏州拙政园 荷塘 亭子`（不要只写 `苏州`）
+   - `虎丘塔 秋天 银杏`（不要只写 `pagoda`）
 
 2. **抓 Bing 图搜结果页**：
 
    ```powershell
    $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
    curl.exe -s -A $ua --max-time 12 -o tmp.html `
-     ("https://cn.bing.com/images/search?q=" + [System.Uri]::EscapeDataString("shibuya crossing tokyo crowd") + "&form=HDRSC2")
+     ("https://cn.bing.com/images/search?q=" + [System.Uri]::EscapeDataString("苏州平江路水乡夜景") + "&form=HDRSC2")
    ```
 
-3. **从 HTML 里抽真实图源 URL**（Bing 把原图地址放在 `mediaurl=` 参数里）：
+3. **从 HTML 里抽图源 URL**：
 
    ```powershell
    $page = Get-Content tmp.html -Raw
@@ -509,17 +526,20 @@ markdown 里这样引用（路径以 `/` 开头，是 Next.js 静态资源约定
            Select-Object -Unique
    ```
 
-4. **过滤水印图源**（这些站点每张图都有大水印，无法直接用）：
+4. **过滤不可用图源**（水印站 + 素材站 + Bing 缩略图）：
 
    ```text
    dreamstime, alamy, shutterstock, gettyimages, istockphoto,
-   123rf, depositphotos, fotolia, stock.adobe
+   123rf, depositphotos, fotolia, stock.adobe,
+   nipic.com, 699pic.com, shetu66.com, vjshi.com, livekong.com, bing.net/th
    ```
 
-5. **逐个下载，第一张 ≥ 30KB 且能成功落盘的就采纳**，存到 `public/covers/<slug>/<name>.<ext>`（保留原扩展名 jpg/png/webp）
+5. **逐个下载候选**，存为 `tmp_候选_N.jpg`
 
-6. **三重验证**：
-   - 文件大小 > 30KB（小于这个基本是错误页 / 占位图）
+6. **目视验证（关键步骤，不可跳过）**：用 Read 工具打开每张候选图，确认画面内容与目标一致。常见错误：广告图、电路图、地图、化妆品、完全无关的风景。**只有确认画面正确的才能采纳。**
+
+7. **采纳后执行三重验证**：
+   - 文件大小 > 30KB
    - 文件头 magic bytes：JPEG = `FF D8 FF`, PNG = `89 50 4E 47`, WebP = `52 49 46 46`
    - 通过 dev server 拉一遍：`curl -o nul -w "%{http_code} %{content_type}" http://localhost:3000/covers/...`
 
