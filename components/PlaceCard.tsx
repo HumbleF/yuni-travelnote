@@ -39,11 +39,13 @@ export function PlaceCard({ place }: { place: PlaceMeta }) {
 
       <div className="p-5 space-y-3">
         <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-lg font-semibold tracking-tight">
+          <h3 className="text-lg font-semibold tracking-tight whitespace-nowrap shrink-0">
             {place.title}
           </h3>
           {place.duration && (
-            <span className="text-xs text-muted shrink-0">{place.duration}</span>
+            <span className="text-xs text-muted truncate min-w-0 text-right">
+              {place.duration}
+            </span>
           )}
         </div>
 
