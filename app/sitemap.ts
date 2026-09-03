@@ -6,8 +6,9 @@ import {
   getCountriesByContinent,
   getRegionsByCountry,
 } from "@/lib/places";
+import { getBaseUrl } from "@/lib/site";
 
-const BASE_URL = process.env.SITE_URL || "https://travel.example.com";
+const BASE_URL = getBaseUrl();
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [];

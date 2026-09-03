@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import sitemap from "./sitemap";
 
 describe("sitemap", () => {
@@ -40,5 +40,24 @@ describe("sitemap", () => {
     const entries = sitemap();
     const urls = entries.map((e) => e.url);
     expect(new Set(urls).size).toBe(urls.length);
+  });
+});
+
+describe("sitemap env configuration", () => {
+  it("uses SITE_URL when set, never the placeholder", async () => {
+    vi.stubEnv("SITE_URL", "https://env-set.example.com");
+    vi.resetModules();
+    try {
+      const { default: freshSitemap } = await import("./sitemap");
+      const entries = freshSitemap();
+      expect(entries.length).toBeGreaterThan(0);
+      expect(entries[0].url.startsWith("https://env-set.example.com")).toBe(true);
+      for (const e of entries) {
+        expect(e.url).not.toContain("travel.example.com");
+      }
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

@@ -51,3 +51,6 @@ next-env.d.ts
 
 # AI agent working docs
 docs/superpowers/
+
+# workbuddy project memory (local, not shared)
+.workbuddy/

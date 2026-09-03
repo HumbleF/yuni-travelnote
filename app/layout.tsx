@@ -8,8 +8,10 @@ import {
   CONTINENT_ORDER,
   getPlacesGroupedByContinent,
 } from "@/lib/places";
+import { getBaseUrl } from "@/lib/site";
 import "./globals.css";
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   title: {
     default: "芋泥今天去哪里",
     template: "%s · 芋泥今天去哪里",
