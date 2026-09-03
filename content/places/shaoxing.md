@@ -3,7 +3,9 @@ title: 绍兴
 slug: shaoxing
 continent: 亚洲
 country: 中国
+countryFlag: 🇨🇳
 countryEn: China
+countrySlug: china
 region: 浙江
 regionEn: Zhejiang
 cover: /covers/shaoxing/cover.jpg
